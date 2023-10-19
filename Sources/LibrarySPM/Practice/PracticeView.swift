@@ -55,10 +55,12 @@ struct PracticeView: View {
 // MARK: - Extension
 extension PracticeView {
     private var Content: some View {
-        if ViewModel.Session.practiceCount == 0 {
-            AnyView(NoVideoContent)
-        } else {
-            AnyView(GridView)
+        Group {
+            if ViewModel.Session.practiceCount == 0 {
+                NoVideoContent
+            } else {
+                GridView
+            }
         }
     }
     

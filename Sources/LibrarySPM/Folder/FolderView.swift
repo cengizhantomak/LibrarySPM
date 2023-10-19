@@ -13,6 +13,10 @@ public struct FolderView: View {
     @StateObject var ViewModel = FolderViewModel()
     @Environment(\.horizontalSizeClass) var HorizontalSizeClass
     
+    public init() {
+        print("olurMu")
+    }
+    
     public var body: some View {
         NavigationStack {
             Content
