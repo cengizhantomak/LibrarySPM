@@ -1,0 +1,59 @@
+{
+  "pins" : [
+    {
+      "identity" : "customalertpackage",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cengizhantomak/CustomAlertPackage",
+      "state" : {
+        "branch" : "main",
+        "revision" : "b2c4bdc36c0a9bc8d948e202368454417e2c0067"
+      }
+    },
+    {
+      "identity" : "lvrealmkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://cengizhan-tomak@bitbucket.org/liveviewsports/lvrealmkit.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "8b34d6500deeb20fd30768a1205ec808d834e6ba"
+      }
+    },
+    {
+      "identity" : "realm-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/realm/realm-core.git",
+      "state" : {
+        "revision" : "36b2df44453ba5e830369c76ab0683799a287605",
+        "version" : "13.13.0"
+      }
+    },
+    {
+      "identity" : "realm-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/realm/realm-swift.git",
+      "state" : {
+        "revision" : "45ea4a0ec4bb3161c807be0a9a4921161dbe60a2",
+        "version" : "10.40.1"
+      }
+    },
+    {
+      "identity" : "swiftui-visual-effects",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lucasbrown/swiftui-visual-effects.git",
+      "state" : {
+        "revision" : "b26f8cebd55ff60ed8953768aa818dfb005b5838",
+        "version" : "1.0.3"
+      }
+    },
+    {
+      "identity" : "ttprogresshud",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/honkmaster/TTProgressHUD",
+      "state" : {
+        "revision" : "2233fe789944154d04dff08d4567d96bc17cbf9a",
+        "version" : "0.0.5"
+      }
+    }
+  ],
+  "version" : 2
+}

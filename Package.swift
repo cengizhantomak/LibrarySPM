@@ -14,6 +14,21 @@ let package = Package(
             name: "LibrarySPM",
             targets: ["LibrarySPM"]),
     ],
+    dependencies: [
+        // Dependencies declare other packages that this package depends on.
+        .package(
+            url: "https://cengizhan-tomak@bitbucket.org/liveviewsports/lvrealmkit.git",
+            branch: "main"
+        ),
+        .package(
+            url: "https://github.com/honkmaster/TTProgressHUD",
+            from: "0.0.5"
+        ),
+        .package(
+            url: "https://github.com/cengizhantomak/CustomAlertPackage",
+            branch: "main"
+        )
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
