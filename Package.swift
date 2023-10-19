@@ -34,7 +34,7 @@ let package = Package(
         .target(
             name: "LibrarySPM",
             dependencies: [
-                .product(name: "LVRealmKit", package: "lvrealmkit"),
+                .product(name: "LVRealmKit", package: "LVRealmKit"),
                 .product(name: "TTProgressHUD", package: "TTProgressHUD"),
                 .product(name: "CustomAlertPackage", package: "CustomAlertPackage")
             ],
