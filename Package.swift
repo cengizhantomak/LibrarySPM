@@ -16,7 +16,10 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://bitbucket.org/liveviewsports/lvrealmkit", .branch("main")),
+        .package(
+            url: "https://bitbucket.org/liveviewsports/LVRealmKit",
+            branch: "main"
+        ),
         .package(
             url: "https://github.com/honkmaster/TTProgressHUD",
             from: "0.0.5"
@@ -32,7 +35,7 @@ let package = Package(
         .target(
             name: "LibrarySPM",
             dependencies: [
-                .product(name: "lvrealmkit", package: "lvrealmkit"),
+                .product(name: "LVRealmKit", package: "LVRealmKit"),
                 .product(name: "TTProgressHUD", package: "TTProgressHUD"),
                 .product(name: "CustomAlertPackage", package: "CustomAlertPackage")
             ],
