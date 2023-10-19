@@ -17,8 +17,7 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(
-            url: "https://cengizhan-tomak@bitbucket.org/liveviewsports/lvrealmkit.git",
-            branch: "main"
+            url: "https://bitbucket.org/liveviewsports/lvrealmkit/src/main/", branch: "main"
         ),
         .package(
             url: "https://github.com/honkmaster/TTProgressHUD",
@@ -34,7 +33,13 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "LibrarySPM",
-            path: "Sources"),
+            dependencies: [
+                .product(name: "lvrealmkit", package: "lvrealmkit"),
+                .product(name: "TTProgressHUD", package: "TTProgressHUD"),
+                .product(name: "CustomAlertPackage", package: "CustomAlertPackage")
+            ],
+            path: "Sources"
+        ),
         .testTarget(
             name: "LibrarySPMTests",
             dependencies: ["LibrarySPM"]),
