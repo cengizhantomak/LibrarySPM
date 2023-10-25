@@ -13,6 +13,7 @@ class DestinationFolderViewModel: ObservableObject {
     @Published var Columns: [GridItem] = []
     @Published var Sessions: [SessionModel] = []
     @Published var SelectedFolder: SessionModel?
+    @Published var IsSelecting = false
     @Published var ShowMoveAlert = false
     @Published var ShowCreatedAlert = false
     @Published var IsSuccessTTProgressHUDVisible = false
@@ -45,6 +46,7 @@ class DestinationFolderViewModel: ObservableObject {
                 UpdateSessionModel(SessionModel: AllSessions)
             } catch {
                 print("Error loading sessions: \(error)")
+                ErrorTTProgressHUD()
             }
         }
     }
@@ -53,50 +55,32 @@ class DestinationFolderViewModel: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             withAnimation {
                 guard let self else { return }
-                if let sessionID = self.PracticeViewModel?.Session.id {
-                    let updatedSessions = SessionModel.filter { session in
-                        sessionID != session.id
+                if let SessionID = self.PracticeViewModel?.Session.id {
+                    let UpdatedSessions = SessionModel.filter { Session in
+                        SessionID != Session.id
                     }
-                    self.Sessions = updatedSessions
+                    self.Sessions = UpdatedSessions
                 }
             }
         }
     }
     
-    func isSelected(session: SessionModel) -> Bool {
-        return SelectedFolder?.id == session.id
+    func IsSelected(Session: SessionModel) -> Bool {
+        return SelectedFolder?.id == Session.id
     }
     
     func MovePractice() {
         Task {
             do {
-                var UpdatedPracticesArray: [PracticeModel] = []
-                
-                PracticeViewModel?.SelectedPractices.forEach { Practice in
-                    var UpdatedPractice = Practice
-                    UpdatedPractice.Session = SelectedFolder
-                    UpdatedPracticesArray.append(UpdatedPractice)
-                }
-                
-                try await PracticeRepository.shared.edit(UpdatedPracticesArray)
-                try await UpdateDestinationFolder()
+                guard let FromSession = PracticeViewModel?.Session else { return }
+                guard let ToFolder = SelectedFolder else { return }
+                guard let SelectedPractices = PracticeViewModel?.SelectedPractices else { return }
+                try await PracticeRepository.shared.movePractices(from: FromSession, to: ToFolder, SelectedPractices)
                 UpdateUI()
             } catch {
-                print("Error updating practice status: \(error)")
+                print("Error updating move status: \(error)")
+                ErrorTTProgressHUD()
             }
-        }
-    }
-    
-    private func UpdateDestinationFolder() async throws {
-        if var DestinationFolder = SelectedFolder {
-            let Practices = try await PracticeRepository.shared.getPractices(DestinationFolder)
-            // DestinationFolder içindeki Practice sayısını güncelle
-            DestinationFolder.practiceCount = Practices.count
-            // DestinationFolder'ın thumbnail'ını güncelle
-            if let LastPractice = Practices.first {
-                DestinationFolder.thumbnail = LastPractice.ThumbPath
-            }
-            try await FolderRepository.shared.edit(DestinationFolder)
         }
     }
     
@@ -105,7 +89,7 @@ class DestinationFolderViewModel: ObservableObject {
             guard let self else { return }
             self.PracticeViewModel?.LoadPractices()
             self.PracticeViewModel?.IsSelecting = false
-            self.PracticeViewModel?.ShowMoveAlert = false
+            self.PracticeViewModel?.ShowMove = false
             self.PracticeViewModel?.SuccessTTProgressHUD()
         }
     }
@@ -136,6 +120,7 @@ class DestinationFolderViewModel: ObservableObject {
                 SuccessTTProgressHUD()
             } catch {
                 print("Error adding session: \(error)")
+                ErrorTTProgressHUD()
             }
         }
     }
@@ -147,7 +132,7 @@ class DestinationFolderViewModel: ObservableObject {
         }
     }
     
-    func ErrorTTProgressHUD() {
+    private func ErrorTTProgressHUD() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.IsErrorTTProgressHUDVisible = true
@@ -158,7 +143,7 @@ class DestinationFolderViewModel: ObservableObject {
         return (ScreenWidth - (Padding * (Amount + 1))) / Amount
     }
     
-    func CircleOffset(For ItemWidth: CGFloat, XOffsetValue: CGFloat = 20, YOffsetValue: CGFloat = 20) -> (X: CGFloat, Y: CGFloat) {
+    func CircleOffset(For ItemWidth: CGFloat, XOffsetValue: CGFloat, YOffsetValue: CGFloat) -> (X: CGFloat, Y: CGFloat) {
         let X = (ItemWidth / 2) - XOffsetValue
         let Y = -(ItemWidth * (1970 / 1080) / 2) + YOffsetValue
         return (X, Y)

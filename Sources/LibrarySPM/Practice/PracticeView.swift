@@ -7,21 +7,17 @@
 
 import SwiftUI
 import CustomAlertPackage
+import LVRealmKit
 
 struct PracticeView: View {
     @StateObject var ViewModel: PracticeViewModel
     @Environment(\.horizontalSizeClass) var HorizontalSizeClass
     @Environment(\.presentationMode) var PresentationMode
+//    @State private var scrollPosition: CGFloat = .zero
     
     var body: some View {
         Content
-            .gesture(DragGesture(minimumDistance: 15, coordinateSpace: .local)
-                .onEnded { Value in
-                    if Value.translation.width > 100 {
-                        PresentationMode.wrappedValue.dismiss()
-                    }
-                }
-            )
+            .disabled(ViewModel.isActive)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 CustomBackButton
@@ -33,17 +29,15 @@ struct PracticeView: View {
                     SelectionBottomBar
                 }
             }
-            .disabled(ViewModel.ShowDeleteAlert)
+            .disabled(ViewModel.ShowDeleteAlert || ViewModel.ShowRenameAlert)
             .navigationBarBackButtonHidden(true)
-            .animation(.spring, value: [ViewModel.IsSelecting, ViewModel.OnlyShowFavorites])
             .onAppear {
                 ViewModel.SetupColumnsToDevice(To: HorizontalSizeClass)
             }
-            .sheet(isPresented: $ViewModel.ShowMoveAlert) {
+            .sheet(isPresented: $ViewModel.ShowMove) {
                 DestinationFolderView(ViewModel: DestinationFolderViewModel(PracticeViewModel: ViewModel))
             }
             .overlay {
-                SessionTitle
                 RenameAlert
                 DeleteAlert
                 ProgressHUD
@@ -55,46 +49,92 @@ struct PracticeView: View {
 // MARK: - Extension
 extension PracticeView {
     private var Content: some View {
-        Group {
+        ZStack {
             if ViewModel.Session.practiceCount == 0 {
-                NoVideoContent
+                NoVideoView()
             } else {
                 GridView
             }
-        }
-    }
-    
-    private var NoVideoContent: some View {
-        ZStack {
-            NoVideoView()
+            SessionTitle
         }
     }
     
     private var GridView: some View {
         GeometryReader { Geometry in
             let ItemWidth = ViewModel.CalculateItemWidth(ScreenWidth: Geometry.size.width, Padding: 1, Amount: CGFloat(ViewModel.Columns.count))
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 Section(header: DateHeader) {
                     LazyVGrid(columns: ViewModel.Columns, spacing: 1) {
                         ForEach(ViewModel.DisplayedPractices, id: \.id) { Practice in
-                            NavigationLink(destination: VideoPlayerView(url: Practice.VideoPath)) {
+                            if !ViewModel.IsSelecting {
+                                NavigationLink(destination: VideoPlayerView(url: Practice.VideoPath)) {
+                                    PracticeItemView(ViewModel: ViewModel, Practice: Practice, ItemWidth: ItemWidth)
+                                }
+                                .buttonStyle(NoEffectButtonStyle())
+                            } else {
                                 PracticeItemView(ViewModel: ViewModel, Practice: Practice, ItemWidth: ItemWidth)
+                                    .onTapGesture {
+                                        if let Index = ViewModel.SelectedPractices.firstIndex(where: { $0.id == Practice.id }) {
+                                            ViewModel.SelectedPractices.remove(at: Index)
+                                        } else {
+                                            ViewModel.SelectedPractices.append(Practice)
+                                        }
+                                    }
+                                    .opacity(ViewModel.Opacity(For: Practice))
                             }
-                            .foregroundColor(.primary)
                         }
                     }
                 }
-                .padding(5)
+//                .background(GeometryReader { geometry in
+//                    Color.clear
+//                        .preference(key: ScrollOffsetPreferenceKey.self, value: geometry.frame(in: .named("Scroll")).origin)
+//                })
+//                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+//                    self.scrollPosition = value.y
+//                    //                    print("detail scrollPosition: ", value)
+//                }
+//                .overlay(alignment: .top, content: {
+//                    //                    if scrollPosition <= 0 {
+//                    //                        LinearGradient(
+//                    //                            gradient: Gradient(colors: [.black, .clear]),
+//                    //                            startPoint: .top,
+//                    //                            endPoint: .bottom)
+//                    //                        .edgesIgnoringSafeArea(.top)
+//                    //                        .frame(height: 10)
+//                    //                    }
+//                })
+                .padding(.horizontal, 5)
+                .padding(.top, 5)
+                .padding(.bottom, 75)
             }
         }
     }
     
     private var DateHeader: some View {
         Text(Date.CurrentDate(From: ViewModel.Session.createdAt))
-            .foregroundColor(.gray)
+            .fontWeight(.semibold)
+            .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .background(.clear)
-            .padding(.top)
+            .padding(.trailing, 5)
+    }
+    
+    // MARK: - Title
+    private var SessionTitle: some View {
+        VStack {
+            HStack {
+                Text(ViewModel.Session.name)
+                    .fontWeight(.bold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .font(.title2)
+                    .background(Color.clear)
+                    .padding(.horizontal)
+                    .frame(alignment: .leading)
+                Spacer(minLength: 100)
+            }
+            Spacer()
+        }
     }
     
     // MARK: - Toolbars
@@ -104,12 +144,11 @@ extension PracticeView {
                 PresentationMode.wrappedValue.dismiss()
             } label: {
                 HStack {
-                    Image(systemName: "chevron.left")
+                    Image(systemName: StringConstants.SystemImage.ChevronBackward)
                         .fontWeight(.semibold)
-                    Text("Videos")
+                    Text(StringConstants.Videos)
                 }
             }
-            .foregroundStyle(.primary)
         }
     }
     
@@ -120,8 +159,7 @@ extension PracticeView {
                     ViewModel.FavoritesButtonAction()
                 } label: {
                     Image(systemName: ViewModel.OnlyShowFavorites ? StringConstants.SystemImage.HeartFill : StringConstants.SystemImage.Heart)
-                        .foregroundColor(.primary)
-                        .padding(8)
+                        .padding(7)
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
                 }
@@ -129,7 +167,6 @@ extension PracticeView {
                     ViewModel.SelectCancelButtonAction()
                 } label: {
                     Text(StringConstants.Select)
-                        .foregroundColor(.primary)
                         .padding(8)
                         .background(.ultraThinMaterial)
                         .clipShape(Capsule())
@@ -145,7 +182,6 @@ extension PracticeView {
                     ViewModel.SelectCancelButtonAction()
                 } label: {
                     Text(StringConstants.Cancel)
-                        .foregroundColor(.primary)
                         .padding(8)
                         .background(.ultraThinMaterial)
                         .clipShape(Capsule())
@@ -157,17 +193,16 @@ extension PracticeView {
     private var SelectionBottomBar: some ToolbarContent {
         ToolbarItemGroup(placement: .bottomBar) {
             Button {
-                ViewModel.ShowMoveAlert = true
+                ViewModel.ShowMove = true
             } label: {
                 Image(systemName: StringConstants.SystemImage.FolderBadgePlus)
-                    .foregroundColor(ViewModel.SelectedPractices.isEmpty ? .gray : .primary)
             }
             .disabled(ViewModel.SelectedPractices.isEmpty)
             
             Spacer()
             
             Text(ViewModel.SelectionCount(For: ViewModel.SelectedPractices.count))
-                .foregroundColor(ViewModel.SelectedPractices.isEmpty ? .gray : .primary)
+                .foregroundStyle(ViewModel.SelectedPractices.isEmpty || ViewModel.ShowMove || ViewModel.ShowDeleteAlert || ViewModel.ShowDeleteAlert ? .secondary : .primary)
             
             Spacer()
             
@@ -179,26 +214,8 @@ extension PracticeView {
                 }
             } label: {
                 Image(systemName: StringConstants.SystemImage.Trash)
-                    .foregroundColor(ViewModel.SelectedPractices.isEmpty ? .gray : .primary)
             }
             .disabled(ViewModel.SelectedPractices.isEmpty)
-        }
-    }
-    
-    // MARK: - Title
-    private var SessionTitle: some View {
-        VStack {
-            HStack {
-                Text(ViewModel.Session.name)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                    .font(.title2)
-                    .background(Color.clear)
-                    .padding(10)
-                    .frame(alignment: .leading)
-                Spacer(minLength: 100)
-            }
-            Spacer()
         }
     }
     
@@ -231,11 +248,7 @@ extension PracticeView {
             ButtonRight: AlertButton(
                 Text: StringConstants.Alert.ButtonText.Save,
                 Action: {
-                    if !ViewModel.NewName.isEmpty {
-                        ViewModel.RenamePractice()
-                    } else {
-                        ViewModel.ErrorTTProgressHUD()
-                    }
+                    ViewModel.RenamePractice()
                 }
             )
         )
@@ -283,8 +296,8 @@ extension PracticeView {
     }
 }
 
-//struct PracticeView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        PracticeView(ViewModel: PracticeViewModel(Folder: FolderModel(Name: "LVS")))
-//    }
-//}
+struct PracticeView_Previews: PreviewProvider {
+    static var previews: some View {
+        PracticeView(ViewModel: PracticeViewModel(Folder: SessionModel()))
+    }
+}

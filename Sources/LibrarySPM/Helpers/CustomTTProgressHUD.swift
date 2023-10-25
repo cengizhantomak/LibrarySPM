@@ -15,13 +15,16 @@ struct CustomTTProgressHUD: View {
     
     var body: some View {
         if IsVisible {
-            TTProgressHUD($IsVisible, config: .init(type: HudType))
-                .scaleEffect(0.5)
-                .onAppear {
-                    Timer.scheduledTimer(withTimeInterval: TimeInterval, repeats: false) { _ in
-                        self.IsVisible = false
-                    }
+            TTProgressHUD($IsVisible, config: TTProgressHUDConfig(
+                type: HudType,
+                imageViewSize: CGSize(width: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 75, height: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 75)
+            ))
+            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 500 : 250, maxHeight: UIDevice.current.userInterfaceIdiom == .pad ? 500 : 250)
+            .onAppear {
+                Timer.scheduledTimer(withTimeInterval: TimeInterval, repeats: false) { _ in
+                    self.IsVisible = false
                 }
+            }
         }
     }
 }

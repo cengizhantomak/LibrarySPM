@@ -9,18 +9,16 @@ import SwiftUI
 import LVRealmKit
 import CustomAlertPackage
 
-public struct FolderView: View {
+struct FolderView: View {
     @StateObject var ViewModel = FolderViewModel()
     @Environment(\.horizontalSizeClass) var HorizontalSizeClass
+//    @State private var scrollPosition: CGFloat = .zero
     
-    public init() {
-        print("olurMu")
-    }
-    
-    public var body: some View {
+    var body: some View {
         NavigationStack {
             Content
                 .disabled(ViewModel.isActive)
+                .animation(.default, value: [ViewModel.IsSelecting, ViewModel.OnlyShowFavorites])
                 .navigationTitle(StringConstants.Videos)
                 .toolbar {
                     if !ViewModel.IsSelecting {
@@ -31,8 +29,6 @@ public struct FolderView: View {
                         SelectionBottomBar
                     }
                 }
-                .disabled(ViewModel.ShowDeleteAlert)
-                .navigationBarBackButtonHidden(ViewModel.ShowDeleteAlert)
                 .onAppear {
                     ViewModel.SetupColumnsToDevice(To: HorizontalSizeClass)
                     ViewModel.LoadFolders()
@@ -49,7 +45,7 @@ public struct FolderView: View {
 }
 
 
-// MARK: - extension
+// MARK: - Extension
 extension FolderView {
     private var Content: some View {
         Group {
@@ -63,15 +59,38 @@ extension FolderView {
     
     private var GridView: some View {
         GeometryReader { Geometry in
-            let ItemWidth = ViewModel.CalculateItemWidth(ScreenWidth: Geometry.size.width, Padding: 12, Amount: CGFloat(ViewModel.Columns.count))
-            ScrollView {
+            let ItemWidth = ViewModel.CalculateItemWidth(ScreenWidth: Geometry.size.width, Padding: 16, Amount: CGFloat(ViewModel.Columns.count))
+            ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 44) {
                     CreateSection(WithTitle: StringConstants.SectionTitle.Todays, Folders: ViewModel.TodaySection, ItemWidth: ItemWidth)
                     CreateSection(WithTitle: StringConstants.SectionTitle.Pinned, Folders: ViewModel.PinnedSection, ItemWidth: ItemWidth)
                     CreateSection(WithTitle: StringConstants.SectionTitle.Session, Folders: ViewModel.SessionSection, ItemWidth: ItemWidth)
                 }
-                .padding(10)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 75)
+//                .background(GeometryReader { Proxy -> Color in
+//                    DispatchQueue.main.async {
+//                        //                                                     ViewModel.UpdateClampedOpacity(With: Proxy, Name: StringConstants.Scroll)
+//                    }
+//                    return Color.clear
+//                })
+//                //                .background(GeometryReader { geometry in
+//                //                        Color.clear
+//                //                            .preference(key: ScrollOffsetPreferenceKey.self, value: geometry.frame(in: .named("Scroll")).origin)
+//                //                })
+//                //                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+//                //                    self.scrollPosition = value.y
+//                //                    print("scrollPosition: ", value)
+//                //                }
             }
+//            .coordinateSpace(name: StringConstants.Scroll)
+//            //            LinearGradient(
+//            //                gradient: Gradient(colors: [.black, .clear]),
+//            //                startPoint: .top,
+//            //                endPoint: .bottom)
+//            //            .opacity(ViewModel.ClampedOpacity)
+//            //            .edgesIgnoringSafeArea(.top)
+//            //            .frame(height: 10)
         }
     }
     
@@ -80,13 +99,25 @@ extension FolderView {
             if !Folders.isEmpty {
                 VStack(alignment: .leading) {
                     Divider()
-                    Section(header: Text(Title).font(.headline)) {
-                        LazyVGrid(columns: ViewModel.Columns, spacing: 10) {
+                    Section(header: Text(Title).font(.title2.weight(.bold))) {
+                        LazyVGrid(columns: ViewModel.Columns, spacing: 14) {
                             ForEach(Folders, id: \.id) { Folder in
-                                NavigationLink(destination: PracticeView(ViewModel: PracticeViewModel(Folder: Folder))) {
+                                if !ViewModel.IsSelecting {
+                                    NavigationLink(destination: PracticeView(ViewModel: PracticeViewModel(Folder: Folder))) {
+                                        FolderItemView(ViewModel: ViewModel, Folder: Folder, ItemWidth: ItemWidth)
+                                    }
+                                    .buttonStyle(NoEffectButtonStyle())
+                                } else {
                                     FolderItemView(ViewModel: ViewModel, Folder: Folder, ItemWidth: ItemWidth)
+                                        .onTapGesture{
+                                            if let Index = ViewModel.SelectedSessions.firstIndex(where: { $0.id == Folder.id }) {
+                                                ViewModel.SelectedSessions.remove(at: Index)
+                                            } else {
+                                                ViewModel.SelectedSessions.append(Folder)
+                                            }
+                                        }
+                                        .opacity(ViewModel.Opacity(For: Folder))
                                 }
-                                .foregroundColor(.primary)
                             }
                         }
                     }
@@ -102,17 +133,16 @@ extension FolderView {
                 ViewModel.AddButtonAction()
             } label: {
                 Image(systemName: StringConstants.SystemImage.Plus)
-                    .foregroundColor(.primary)
-                    .padding(8)
+                    .padding(7)
                     .background(.ultraThinMaterial)
                     .clipShape(Circle())
             }
+            // TODO: Delete Toolbar
             Button {
                 ViewModel.AddPractice()
             } label: {
                 Text("Ekle")
-                    .foregroundColor(.primary)
-                    .padding(8)
+                    .padding(7)
                     .background(.ultraThinMaterial)
                     .clipShape(Capsule())
             }
@@ -126,8 +156,7 @@ extension FolderView {
                     ViewModel.FavoritesButtonAction()
                 } label: {
                     Image(systemName: ViewModel.OnlyShowFavorites ? StringConstants.SystemImage.HeartFill : StringConstants.SystemImage.Heart)
-                        .foregroundColor(.primary)
-                        .padding(8)
+                        .padding(7)
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
                 }
@@ -135,7 +164,6 @@ extension FolderView {
                     ViewModel.SelectCancelButtonAction()
                 } label: {
                     Text(StringConstants.Select)
-                        .foregroundColor(.primary)
                         .padding(8)
                         .background(.ultraThinMaterial)
                         .clipShape(Capsule())
@@ -150,7 +178,6 @@ extension FolderView {
                 ViewModel.SelectCancelButtonAction()
             } label: {
                 Text(StringConstants.Cancel)
-                    .foregroundColor(.primary)
                     .padding(8)
                     .background(.ultraThinMaterial)
                     .clipShape(Capsule())
@@ -172,7 +199,6 @@ extension FolderView {
                 }
             } label: {
                 Image(systemName: StringConstants.SystemImage.Trash)
-                    .foregroundColor(ViewModel.SelectedSessions.isEmpty ? .gray : .primary)
             }
             .disabled(ViewModel.SelectedSessions.isEmpty)
         }
@@ -214,11 +240,7 @@ extension FolderView {
             ButtonRight: AlertButton(
                 Text: StringConstants.Alert.ButtonText.Create,
                 Action: {
-                    if !ViewModel.FolderName.isEmpty {
-                        ViewModel.AddFolder()
-                    } else {
-                        ViewModel.ErrorTTProgressHUD()
-                    }
+                    ViewModel.AddFolder()
                 }
             )
         )
@@ -259,11 +281,7 @@ extension FolderView {
             ButtonRight: AlertButton(
                 Text: StringConstants.Alert.ButtonText.Save,
                 Action: {
-                    if !ViewModel.NewName.isEmpty {
-                        ViewModel.RenameFolder(NewName: ViewModel.NewName)
-                    } else {
-                        ViewModel.ErrorTTProgressHUD()
-                    }
+                    ViewModel.RenameFolder(NewName: ViewModel.NewName)
                 }
             )
         )
@@ -311,8 +329,15 @@ extension FolderView {
     }
 }
 
-//struct FolderView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        FolderView()
+struct FolderView_Previews: PreviewProvider {
+    static var previews: some View {
+        FolderView()
+    }
+}
+
+//struct ScrollOffsetPreferenceKey: PreferenceKey {
+//    static var defaultValue: CGPoint = .zero
+//
+//    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
 //    }
 //}

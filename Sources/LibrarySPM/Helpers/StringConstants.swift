@@ -45,6 +45,9 @@ enum StringConstants {
         static let FolderBadgePlus = "folder.badge.plus"
         static let Magnifyingglass = "magnifyingglass"
         static let MultiplyCircleFill = "multiply.circle.fill"
+        static let ChevronBackward = "chevron.backward"
+        static let Circle = "circle"
+        static let CircleCircleFill = "circle.circle.fill"
     }
     
     

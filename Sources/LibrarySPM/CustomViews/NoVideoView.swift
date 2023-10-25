@@ -19,7 +19,7 @@ struct NoVideoView: View {
                 .font(.system(size: 15))
             Spacer()
         }
-        .foregroundColor(.gray)
+        .foregroundStyle(.gray)
         .ignoresSafeArea(.all)
     }
 }

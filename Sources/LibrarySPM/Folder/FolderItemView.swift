@@ -15,123 +15,98 @@ struct FolderItemView: View {
     let ItemWidth: CGFloat
     
     var body: some View {
-        if ViewModel.IsSelecting {
-            Button {
-                if let Index = ViewModel.SelectedSessions.firstIndex(where: { $0.id == Folder.id }) {
-                    ViewModel.SelectedSessions.remove(at: Index)
-                } else {
-                    ViewModel.SelectedSessions.append(Folder)
-                }
-            } label: {
-                VStack(alignment: .leading) {
-                    FolderItem
-                        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 10))
-                        .contextMenu {
-                            if !ViewModel.IsSelecting {
-                                FolderContextMenu
-                            }
-                        }
-                    Text(Folder.name)
-                        .truncationMode(.tail)
-                        .lineLimit(1)
-                        .font(.system(size: 15))
-                    Text(String(Folder.practiceCount))
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                }
-            }
-            .opacity(ViewModel.Opacity(For: Folder))
-        } else {
-            VStack(alignment: .leading) {
-                FolderItem
-                    .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 10))
-                    .contextMenu {
-                        if !ViewModel.IsSelecting {
-                            FolderContextMenu
-                        }
+        VStack(alignment: .leading) {
+            FolderItem
+                .overlay {
+                    if ViewModel.IsSelecting {
+                        SelectionIcon
+                    } else if Folder.isFavorite {
+                        FavoriteIcon
                     }
-                Text(Folder.name)
-                    .truncationMode(.tail)
-                    .lineLimit(1)
-                    .font(.system(size: 15))
-                Text(String(Folder.practiceCount))
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
-            }
+                }
+                .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 5))
+                .contextMenu {
+                    if !ViewModel.IsSelecting {
+                        FolderContextMenu
+                    }
+                }
+            Text(Folder.name)
+                .truncationMode(.tail)
+                .lineLimit(1)
+                .font(.system(size: 17))
+            Text(String(Folder.practiceCount))
+                .font(.system(size: 15))
+                .foregroundStyle(.gray)
+            Text(String(Folder.practiceCount))
+                .font(.system(size: 15))
+                .foregroundStyle(.gray)
+            Text(Date.CurrentTime(From: Folder.updatedAt))
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.gray)
+            Text(String(Folder.totalFileSize))
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.gray)
         }
     }
 }
 
+
 extension FolderItemView {
-    
     // MARK: - FolderItem
     private var FolderItem: some View {
-        let CircleOffset = ViewModel.CircleOffset(For: ItemWidth, XOffsetValue: 20, YOffsetValue: 20)
         let SafeItemWidth = max(ItemWidth, 1)
         
-        return ZStack {
+        return Group {
             if let ThumbPath = Folder.thumbnail {
-                AsyncImage(url: URL.documentsDirectory.appending(path: ThumbPath)) { Image in
-                    Image
+                Image(uiImage: UIImage(contentsOfFile: URL.documentsDirectory.appending(path: ThumbPath).path) ?? UIImage())
+//                AsyncImage(url: URL.documentsDirectory.appending(path: ThumbPath)) { Image in
+//                    Image
                         .resizable()
-                        .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
+                        .frame(width: SafeItemWidth, height: SafeItemWidth * (1850 / 1080))
                         .scaledToFit()
-                        .cornerRadius(10)
-                } placeholder: {
-                    ProgressView()
-                        .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
-                }
+                        .cornerRadius(5)
+//                } placeholder: {
+//                    ProgressView()
+//                        .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
+//                }
             } else {
                 Rectangle()
                     .fill(ColorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.9, green: 0.9, blue: 0.9))
                     .background()
-                    .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
-                    .cornerRadius(10)
-                Image(systemName: StringConstants.SystemImage.RectangleStackBadgePlay)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: SafeItemWidth * 0.3, height: SafeItemWidth * 0.3)
-                    .foregroundColor(ColorScheme == .dark ? Color(red: 0.3, green: 0.3, blue: 0.3) : Color(red: 0.6, green: 0.6, blue: 0.6))
+                    .frame(width: SafeItemWidth, height: SafeItemWidth * (1850 / 1080))
+                    .cornerRadius(5)
+                    .overlay {
+                        Image(systemName: StringConstants.SystemImage.RectangleStackBadgePlay)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: SafeItemWidth * 0.3, height: SafeItemWidth * 0.3)
+                            .foregroundStyle(ColorScheme == .dark ? Color(red: 0.3, green: 0.3, blue: 0.3) : Color(red: 0.6, green: 0.6, blue: 0.6))
+                    }
             }
-            FavoriteIcon(CircleOffset: CircleOffset, SafeItemWidth: SafeItemWidth)
-            SelectionIcon(CircleOffset: CircleOffset)
         }
-        .background(.clear)
-        .cornerRadius(10)
     }
     
     // MARK: - Icons
-    private func FavoriteIcon(CircleOffset: (X: CGFloat, Y: CGFloat), SafeItemWidth: CGFloat) -> some View {
-        Group {
-            if Folder.isFavorite && !ViewModel.IsSelecting {
-                Image(systemName: StringConstants.SystemImage.HeartFill)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: SafeItemWidth * 0.08, height: SafeItemWidth * 0.08)
-                    .foregroundColor(.red)
-                    .offset(x: CircleOffset.X, y: CircleOffset.Y)
-            } else {
-                EmptyView()
-            }
-        }
+    private var FavoriteIcon: some View {
+        let CircleOffset = ViewModel.CircleOffset(For: ItemWidth, XOffsetValue: 20, YOffsetValue: 30)
+        
+        return Image(systemName: StringConstants.SystemImage.HeartFill)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 15, height: 15)
+            .foregroundStyle(.red)
+            .offset(x: CircleOffset.X, y: CircleOffset.Y)
     }
     
-    private func SelectionIcon(CircleOffset: (X: CGFloat, Y: CGFloat)) -> some View {
-        Group {
-            if ViewModel.IsSelecting {
-                Circle()
-                    .stroke(.gray, lineWidth: 2)
-                    .background(Circle().fill(Color.white))
-                    .overlay(
-                        ViewModel.SelectedSessions.contains(where: { $0.id == Folder.id }) ?
-                        Circle().stroke(.gray, lineWidth: 2).frame(width: 10, height: 10) : nil
-                    )
-                    .frame(width: 20, height: 20)
-                    .offset(x: CircleOffset.X, y: CircleOffset.Y)
-            } else {
-                EmptyView()
-            }
-        }
+    private var SelectionIcon: some View {
+        let CircleOffset = ViewModel.CircleOffset(For: ItemWidth, XOffsetValue: 20, YOffsetValue: 30)
+        
+        return Image(systemName: ViewModel.SelectedSessions.contains(where: { $0.id == Folder.id }) ? StringConstants.SystemImage.CircleCircleFill : StringConstants.SystemImage.Circle)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 20, height: 20)
+            .foregroundStyle(.white)
+            .offset(x: CircleOffset.X, y: CircleOffset.Y)
     }
     
     // MARK: - Context Menu and Actions
@@ -207,8 +182,8 @@ extension FolderItemView {
     }
 }
 
-//struct FolderItemView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        FolderItemView(ViewModel: FolderViewModel(), Folder: FolderModel(Name: "LVS"), ItemWidth: 100)
-//    }
-//}
+struct FolderItemView_Previews: PreviewProvider {
+    static var previews: some View {
+        FolderItemView(ViewModel: FolderViewModel(), Folder: SessionModel(), ItemWidth: 150)
+    }
+}

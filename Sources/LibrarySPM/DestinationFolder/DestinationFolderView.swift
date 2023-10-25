@@ -26,6 +26,7 @@ struct DestinationFolderView: View {
         .onAppear {
             ViewModel.SetupColumnsToDevice(To: HorizontalSizeClass)
         }
+        .accentColor(.primary)
         .overlay {
             Alerts
             TTProgressHUD
@@ -57,10 +58,12 @@ extension DestinationFolderView {
                     ForEach(ViewModel.FilteredSessions, id: \.id) { Folder in
                         DestinationFolderItemView(ViewModel: ViewModel, Folder: Folder, ItemWidth: ItemWidth)
                             .onTapGesture {
-                                if ViewModel.SelectedFolder?.id == Folder.id {
-                                    ViewModel.SelectedFolder = nil
-                                } else {
-                                    ViewModel.SelectedFolder = Folder
+                                withAnimation {
+                                    if ViewModel.SelectedFolder?.id == Folder.id {
+                                        ViewModel.SelectedFolder = nil
+                                    } else {
+                                        ViewModel.SelectedFolder = Folder
+                                    }
                                 }
                             }
                     }
@@ -82,7 +85,7 @@ extension DestinationFolderView {
                     .frame(minWidth: 0, maxWidth: .infinity)
                     .padding(.vertical, 5)
                     .background(ViewModel.ShowFavorited ? Color.gray.opacity(0.5) : Color.gray.opacity(0.15))
-                    .foregroundColor(ViewModel.ShowFavorited ? Color.primary : Color.gray)
+                    .foregroundStyle(ViewModel.ShowFavorited ? Color.primary : Color.gray)
             }
             
             Button(action: {
@@ -92,7 +95,7 @@ extension DestinationFolderView {
                     .frame(minWidth: 0, maxWidth: .infinity)
                     .padding(.vertical, 5)
                     .background(ViewModel.ShowPinned ? Color.gray.opacity(0.5) : Color.gray.opacity(0.15))
-                    .foregroundColor(ViewModel.ShowPinned ? Color.primary : Color.gray)
+                    .foregroundStyle(ViewModel.ShowPinned ? Color.primary : Color.gray)
             }
         }
         .cornerRadius(8)
@@ -107,7 +110,6 @@ extension DestinationFolderView {
                     ViewModel.AddButtonAction()
                 } label: {
                     Image(systemName: StringConstants.SystemImage.Plus)
-                        .foregroundColor(.primary)
                         .padding(8)
                         .background(.ultraThinMaterial)
                         .clipShape(Circle())
@@ -122,7 +124,6 @@ extension DestinationFolderView {
                     }
                 } label: {
                     Text(StringConstants.Move)
-                        .foregroundColor(ViewModel.SelectedFolder == nil ? .gray : .primary)
                         .padding(8)
                         .background(.ultraThinMaterial)
                         .clipShape(Capsule())
@@ -170,11 +171,7 @@ extension DestinationFolderView {
                 ButtonRight: AlertButton(
                     Text: StringConstants.Alert.ButtonText.Create,
                     Action: {
-                        if !ViewModel.FolderName.isEmpty {
-                            ViewModel.AddFolder()
-                        } else {
-                            ViewModel.ErrorTTProgressHUD()
-                        }
+                        ViewModel.AddFolder()
                     }
                 )
             )
@@ -219,6 +216,6 @@ extension DestinationFolderView {
     }
 }
 
-//#Preview {
-//    DestinationFolderView()
-//}
+#Preview {
+    DestinationFolderView(ViewModel: DestinationFolderViewModel(PracticeViewModel: PracticeViewModel(Folder: SessionModel())))
+}

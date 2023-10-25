@@ -12,7 +12,7 @@ class PracticeViewModel: ObservableObject {
     @Published var Columns: [GridItem] = []
     @Published var IsSelecting = false
     @Published var OnlyShowFavorites = false
-    @Published var ShowMoveAlert = false
+    @Published var ShowMove = false
     @Published var ShowRenameAlert = false
     @Published var ShowDeleteAlert = false
     @Published var IsSuccessTTProgressHUDVisible = false
@@ -39,35 +39,16 @@ class PracticeViewModel: ObservableObject {
     func LoadPractices() {
         Task {
             do {
-                try await GetPractices()
+                let AllPractices = try await PracticeRepository.shared.getPractices(Session)
+                GetPractices(PracticeModel: AllPractices)
             } catch {
                 print("Failed to load practices: \(error)")
+                ErrorTTProgressHUD()
             }
         }
     }
     
-    func GetPractices() async throws {
-        let AllPractices = try await PracticeRepository.shared.getPractices(Session)
-        try await UpdateSession(AllPractices)
-        UpdatePracticeModel(PracticeModel: AllPractices)
-    }
-    
-    private func UpdateSession(_ AllPractices: [PracticeModel]) async throws {
-        var UpdateSession = self.Session
-        // Session içindeki Practice sayısını güncelle
-        UpdateSession.practiceCount = AllPractices.count
-        
-        // Session'ın thumbnail'ını güncelle
-        if let LastPractice = AllPractices.first {
-            UpdateSession.thumbnail = LastPractice.ThumbPath
-        } else {
-            UpdateSession.thumbnail = nil
-        }
-        
-        try await FolderRepository.shared.edit(UpdateSession)
-    }
-    
-    private func UpdatePracticeModel(PracticeModel: [PracticeModel]) {
+    func GetPractices(PracticeModel: [PracticeModel]) {
         DispatchQueue.main.async { [weak self] in
             withAnimation {
                 guard let self else { return }
@@ -81,7 +62,7 @@ class PracticeViewModel: ObservableObject {
     
     func SaveToPhonePractice() {
         print("Save to Phone Tapped")
-        SuccessTTProgressHUD()
+        ErrorTTProgressHUD()
     }
     
     func RenamePractice() {
@@ -92,24 +73,26 @@ class PracticeViewModel: ObservableObject {
                     Video.isFavorite = PracticeFavorite
                     try await PracticeRepository.shared.edit(Video)
                 }
-                try await GetPractices()
+                LoadPractices()
+                SuccessTTProgressHUD()
             } catch {
-                print("Error updating favorite status: \(error)")
+                print("Error updating rename status: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func DeletePractices(_ DeletePractice: [PracticeModel]) {
         Task {
             do {
                 try await PracticeRepository.shared.deletePractices(DeletePractice)
-                try await GetPractices()
+                LoadPractices()
+                SuccessTTProgressHUD()
             } catch {
-                print("Error deleting session: \(error)")
+                print("Error deleting practices: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func FavoritesButtonAction() {
@@ -123,6 +106,7 @@ class PracticeViewModel: ObservableObject {
             self.isActive = false
         }
         DisplayedPractices = OnlyShowFavorites ? Practices.filter { $0.isFavorite } : Practices
+        Session.practiceCount = DisplayedPractices.count
     }
     
     func ToggleFavorite() {
@@ -132,12 +116,13 @@ class PracticeViewModel: ObservableObject {
                     Video.isFavorite.toggle()
                     try await PracticeRepository.shared.edit(Video)
                 }
-                try await GetPractices()
+                LoadPractices()
+                SuccessTTProgressHUD()
             } catch {
                 print("Error updating favorite status: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func SelectCancelButtonAction() {
@@ -173,14 +158,14 @@ class PracticeViewModel: ObservableObject {
         }
     }
     
-    func ErrorTTProgressHUD() {
+    private func ErrorTTProgressHUD() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.IsErrorTTProgressHUDVisible = true
         }
     }
     
-    func CircleOffset(For ItemWidth: CGFloat, XOffsetValue: CGFloat = 20, YOffsetValue: CGFloat = 20) -> (X: CGFloat, Y: CGFloat) {
+    func CircleOffset(For ItemWidth: CGFloat, XOffsetValue: CGFloat, YOffsetValue: CGFloat) -> (X: CGFloat, Y: CGFloat) {
         let X = (ItemWidth / 2) - XOffsetValue
         let Y = -(ItemWidth * (16 / 9) / 2) + YOffsetValue
         return (X, Y)
@@ -203,9 +188,9 @@ class PracticeViewModel: ObservableObject {
     func SetupColumnsToDevice(To SizeClass: UserInterfaceSizeClass?) {
         let ItemCount: Int
         if SizeClass == .compact {
-            ItemCount = 2 //iPhone
+            ItemCount = 3 //iPhone
         } else {
-            ItemCount = 4 //iPad
+            ItemCount = 5 //iPad
         }
         Columns = Array(repeating: GridItem(.flexible()), count: ItemCount)
     }

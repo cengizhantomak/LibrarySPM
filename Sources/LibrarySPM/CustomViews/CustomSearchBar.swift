@@ -14,17 +14,17 @@ struct CustomSearchBar: View {
     var body: some View {
         HStack {
             Image(systemName: StringConstants.SystemImage.Magnifyingglass)
-                .foregroundColor(.gray)
+                .foregroundStyle(.gray)
             
             TextField(Placeholder, text: $Text)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             if !Text.isEmpty {
                 Button(action: {
                     self.Text = String()
                 }) {
                     Image(systemName: StringConstants.SystemImage.MultiplyCircleFill)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                 }
             }
         }

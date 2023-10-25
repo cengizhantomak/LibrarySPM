@@ -10,8 +10,6 @@ import LVRealmKit
 import AVFoundation
 
 class FolderViewModel: ObservableObject {
-    @Published var mediaURLs: [URL: URL] = [:]  // [videoURL: imageURL]
-    @Published var sortedVideoURLs: [URL] = []
     @Published var Columns: [GridItem] = []
     @Published var IsSelecting = false
     @Published var OnlyShowFavorites = false
@@ -57,6 +55,7 @@ class FolderViewModel: ObservableObject {
                 UpdateSessionModel(SessionModel: AllSessions)
             } catch {
                 print("Error loading sessions: \(error)")
+                ErrorTTProgressHUD()
             }
         }
     }
@@ -94,11 +93,12 @@ class FolderViewModel: ObservableObject {
                 Folder.createdAt = FolderCreationDate ?? Date()
                 try await FolderRepository.shared.addFolder(Folder)
                 LoadFolders()
+                SuccessTTProgressHUD()
             } catch {
                 print("Error adding session: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func AddPractice() {
@@ -128,14 +128,16 @@ class FolderViewModel: ObservableObject {
                         _ = try await PracticeRepository.shared.addPractice(&NewPractice)
                     }
                     LoadFolders()
+                    SuccessTTProgressHUD()
                 } catch {
                     print("Failed to add practice: \(error)")
+                    ErrorTTProgressHUD()
                 }
             }
         } catch {
             print("An error occurred: \(error)")
+            ErrorTTProgressHUD()
         }
-        SuccessTTProgressHUD()
     }
     
     func SaveRandomVideoToContainer() throws -> (Date: Date, VideoPath: String, ThumbnailPath: String, Duration: Int64, Size: Int64)? {
@@ -205,11 +207,12 @@ class FolderViewModel: ObservableObject {
                     try await FolderRepository.shared.edit(Folder)
                 }
                 LoadFolders()
+                SuccessTTProgressHUD()
             } catch {
-                print("Error updating favorite status: \(error)")
+                print("Error updating rename status: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func DeleteFolders(_ Folder: [SessionModel]) {
@@ -217,12 +220,13 @@ class FolderViewModel: ObservableObject {
             do {
                 try await FolderRepository.shared.deleteFolders(Folder)
                 LoadFolders()
+                SuccessTTProgressHUD()
             } catch {
                 print("Error deleting session: \(error)")
+                ErrorTTProgressHUD()
             }
         }
         SelectedSessions.removeAll()
-        SuccessTTProgressHUD()
     }
     
     func TogglePin() {
@@ -233,19 +237,17 @@ class FolderViewModel: ObservableObject {
                     try await FolderRepository.shared.edit(Folder)
                 }
                 LoadFolders()
+                SuccessTTProgressHUD()
             } catch {
-                print("Error updating favorite status: \(error)")
+                print("Error updating pin status: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func FavoritesButtonAction() {
         isActive = true
-        withAnimation { [weak self] in
-            guard let self else { return }
-            self.OnlyShowFavorites.toggle()
-        }
+        OnlyShowFavorites.toggle()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
             self.isActive = false
@@ -261,19 +263,17 @@ class FolderViewModel: ObservableObject {
                     try await FolderRepository.shared.edit(Folder)
                 }
                 LoadFolders()
+                SuccessTTProgressHUD()
             } catch {
                 print("Error updating favorite status: \(error)")
+                ErrorTTProgressHUD()
             }
         }
-        SuccessTTProgressHUD()
     }
     
     func SelectCancelButtonAction() {
         isActive = true
-        withAnimation { [weak self] in
-            guard let self else { return }
-            self.IsSelecting.toggle()
-        }
+        IsSelecting.toggle()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
             self.isActive = false
@@ -301,7 +301,7 @@ class FolderViewModel: ObservableObject {
         }
     }
     
-    func ErrorTTProgressHUD() {
+    private func ErrorTTProgressHUD() {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.IsErrorTTProgressHUDVisible = true
@@ -312,7 +312,7 @@ class FolderViewModel: ObservableObject {
         return (ScreenWidth - (Padding * (Amount + 1))) / Amount
     }
     
-    func CircleOffset(For ItemWidth: CGFloat, XOffsetValue: CGFloat = 20, YOffsetValue: CGFloat = 20) -> (X: CGFloat, Y: CGFloat) {
+    func CircleOffset(For ItemWidth: CGFloat, XOffsetValue: CGFloat, YOffsetValue: CGFloat) -> (X: CGFloat, Y: CGFloat) {
         let X = (ItemWidth / 2) - XOffsetValue
         let Y = -(ItemWidth * (1970 / 1080) / 2) + YOffsetValue
         return (X, Y)
