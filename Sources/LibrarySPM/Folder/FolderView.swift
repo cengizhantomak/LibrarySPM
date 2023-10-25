@@ -9,12 +9,16 @@ import SwiftUI
 import LVRealmKit
 import CustomAlertPackage
 
-struct FolderView: View {
+public struct FolderView: View {
     @StateObject var ViewModel = FolderViewModel()
     @Environment(\.horizontalSizeClass) var HorizontalSizeClass
 //    @State private var scrollPosition: CGFloat = .zero
     
-    var body: some View {
+    public init() {
+        print("olurMu")
+    }
+    
+    public var body: some View {
         NavigationStack {
             Content
                 .disabled(ViewModel.isActive)

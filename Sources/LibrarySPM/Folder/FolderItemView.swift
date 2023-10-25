@@ -35,17 +35,6 @@ struct FolderItemView: View {
                 .lineLimit(1)
                 .font(.system(size: 17))
             Text(String(Folder.practiceCount))
-                .font(.system(size: 15))
-                .foregroundStyle(.gray)
-            Text(String(Folder.practiceCount))
-                .font(.system(size: 15))
-                .foregroundStyle(.gray)
-            Text(Date.CurrentTime(From: Folder.updatedAt))
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.gray)
-            Text(String(Folder.totalFileSize))
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.gray)
         }
     }
 }
