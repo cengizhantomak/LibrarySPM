@@ -24,6 +24,7 @@ class PracticeViewModel: ObservableObject {
     @Published var PracticeFavorite = false
     @Published var ClampedOpacity: CGFloat = 0.0
     @Published var isActive = false
+    @Published var IsScroll = false
     var DisplayedPractices: [PracticeModel] = []
     var Practices: [PracticeModel] = [] {
         didSet {
@@ -50,7 +51,7 @@ class PracticeViewModel: ObservableObject {
     
     func GetPractices(PracticeModel: [PracticeModel]) {
         DispatchQueue.main.async { [weak self] in
-            withAnimation {
+            withAnimation(.linear(duration: 0.2)) {
                 guard let self else { return }
                 self.Session.practiceCount = PracticeModel.count
                 self.Practices = PracticeModel
@@ -97,10 +98,10 @@ class PracticeViewModel: ObservableObject {
     
     func FavoritesButtonAction() {
         isActive = true
-        withAnimation { [weak self] in
-            guard let self else { return }
+//        withAnimation { [weak self] in
+//            guard let self else { return }
             self.OnlyShowFavorites.toggle()
-        }
+//        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
             self.isActive = false
@@ -127,16 +128,24 @@ class PracticeViewModel: ObservableObject {
     
     func SelectCancelButtonAction() {
         isActive = true
-        withAnimation { [weak self] in
-            guard let self else { return }
+//        withAnimation { [weak self] in
+//            guard let self else { return }
             self.IsSelecting.toggle()
-        }
+//        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
             self.isActive = false
         }
         if !IsSelecting {
             SelectedPractices.removeAll()
+        }
+    }
+    
+    func ToggleSelection(Of Practice: PracticeModel) {
+        if let Index = SelectedPractices.firstIndex(where: { $0.id == Practice.id }) {
+            SelectedPractices.remove(at: Index)
+        } else {
+            SelectedPractices.append(Practice)
         }
     }
     

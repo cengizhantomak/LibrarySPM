@@ -7,6 +7,7 @@
 
 import SwiftUI
 import LVRealmKit
+import Kingfisher
 
 struct PracticeItemView: View {
     @StateObject var ViewModel: PracticeViewModel
@@ -33,29 +34,47 @@ struct PracticeItemView: View {
 
 
 extension PracticeItemView {
-    
     // MARK: - PracticeItem
     private var PracticeItem: some View {
         let SafeItemWidth = max(ItemWidth, 1)
         
         return Group {
-            if let ThumbPath = Practice.ThumbPath {
-                Image(uiImage: UIImage(contentsOfFile: URL.documentsDirectory.appending(path: ThumbPath).path) ?? UIImage())
+            
+            // MARK: - UIImage
+//            if let ThumbPath = Practice.ThumbPath,
+//               let UIImageURL = UIImage(contentsOfFile: URL.documentsDirectory.appending(path: ThumbPath).path) {
+//                Image(uiImage: UIImageURL)
+//                    .resizable()
+//                    .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
+//                    .scaledToFit()
+                
+            // MARK: - AsyncImage
+//            if let ThumbPath = Practice.ThumbPath {
 //                AsyncImage(url: URL.documentsDirectory.appending(path: ThumbPath)) { Image in
 //                    Image
-                        .resizable()
-                        .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
-                        .scaledToFit()
-                        .cornerRadius(2)
+//                        .resizable()
+//                        .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
+//                        .scaledToFit()
 //                } placeholder: {
 //                    ProgressView()
 //                        .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
 //                }
+                    
+            // MARK: - KINGFISHER
+            if let ThumbPath = Practice.ThumbPath {
+                KFImage(URL.documentsDirectory.appending(path: ThumbPath))
+                    .cacheMemoryOnly()
+                    .setProcessor(DownsamplingImageProcessor(size: .init(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))))
+                    .scaleFactor(UIApplication.shared.firstWindow?.screen.scale ?? 2)
+                    .resizable()
+                    .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
+                    .scaledToFit()
+                
+                
             } else {
                 Rectangle()
                     .fill(ColorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.9, green: 0.9, blue: 0.9))
                     .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
-                    .cornerRadius(2)
                     .overlay {
                         Image(systemName: StringConstants.SystemImage.RectangleStackBadgePlay)
                             .resizable()
@@ -69,7 +88,7 @@ extension PracticeItemView {
             VStack {
                 Spacer()
                 LinearGradient(colors: [Color.black, Color.clear], startPoint: .bottom, endPoint: .top)
-                    .frame(height: 150)
+                    .frame(height: 100)
             }
             NameTimeTitle
         }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import LVRealmKit
+import Kingfisher
 
 struct FolderItemView: View {
     @StateObject var ViewModel: FolderViewModel
@@ -35,6 +36,8 @@ struct FolderItemView: View {
                 .lineLimit(1)
                 .font(.system(size: 17))
             Text(String(Folder.practiceCount))
+                .font(.system(size: 15))
+                .foregroundStyle(.gray)
         }
     }
 }
@@ -46,18 +49,26 @@ extension FolderItemView {
         let SafeItemWidth = max(ItemWidth, 1)
         
         return Group {
-            if let ThumbPath = Folder.thumbnail {
-                Image(uiImage: UIImage(contentsOfFile: URL.documentsDirectory.appending(path: ThumbPath).path) ?? UIImage())
-//                AsyncImage(url: URL.documentsDirectory.appending(path: ThumbPath)) { Image in
-//                    Image
+            
+            // MARK: - UIImage
+//            if let ThumbPath = Folder.thumbnail,
+//               let UIImageURL = UIImage(contentsOfFile: URL.documentsDirectory.appending(path: ThumbPath).path) {
+//                Image(uiImage: UIImageURL)
+//                    .resizable()
+//                    .frame(width: SafeItemWidth, height: SafeItemWidth * (1850 / 1080))
+//                    .scaledToFit()
+//                    .cornerRadius(5)
+                
+                // MARK: - KINGFISHER
+                if let ThumbPath = Folder.thumbnail {
+                    KFImage(URL.documentsDirectory.appending(path: ThumbPath))
+                        .cacheMemoryOnly()
+                        .setProcessor(DownsamplingImageProcessor(size: .init(width: SafeItemWidth, height: SafeItemWidth * (1850 / 1080))))
+                        .scaleFactor(UIApplication.shared.firstWindow?.screen.scale ?? 2)
                         .resizable()
                         .frame(width: SafeItemWidth, height: SafeItemWidth * (1850 / 1080))
                         .scaledToFit()
                         .cornerRadius(5)
-//                } placeholder: {
-//                    ProgressView()
-//                        .frame(width: SafeItemWidth, height: SafeItemWidth * (16 / 9))
-//                }
             } else {
                 Rectangle()
                     .fill(ColorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.9, green: 0.9, blue: 0.9))

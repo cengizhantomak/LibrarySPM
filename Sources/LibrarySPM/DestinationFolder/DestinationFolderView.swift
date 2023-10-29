@@ -22,7 +22,6 @@ struct DestinationFolderView: View {
                     Toolbars
                 }
         }
-        .animation(.default, value: [ViewModel.ShowFavorited, ViewModel.ShowPinned])
         .onAppear {
             ViewModel.SetupColumnsToDevice(To: HorizontalSizeClass)
         }
@@ -31,6 +30,7 @@ struct DestinationFolderView: View {
             Alerts
             TTProgressHUD
         }
+        .animation(.linear(duration: 0.2), value: [ViewModel.ShowFavorited, ViewModel.ShowPinned])
     }
 }
 
@@ -58,12 +58,8 @@ extension DestinationFolderView {
                     ForEach(ViewModel.FilteredSessions, id: \.id) { Folder in
                         DestinationFolderItemView(ViewModel: ViewModel, Folder: Folder, ItemWidth: ItemWidth)
                             .onTapGesture {
-                                withAnimation {
-                                    if ViewModel.SelectedFolder?.id == Folder.id {
-                                        ViewModel.SelectedFolder = nil
-                                    } else {
-                                        ViewModel.SelectedFolder = Folder
-                                    }
+                                withAnimation(.linear(duration: 0.2)) {
+                                    ViewModel.ToggleSelection(Of: Folder)
                                 }
                             }
                     }

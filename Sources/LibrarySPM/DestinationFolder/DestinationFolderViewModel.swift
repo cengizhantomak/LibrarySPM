@@ -53,7 +53,7 @@ class DestinationFolderViewModel: ObservableObject {
     
     private func UpdateSessionModel(SessionModel: [SessionModel]) {
         DispatchQueue.main.async { [weak self] in
-            withAnimation {
+            withAnimation(.linear(duration: 0.2)) {
                 guard let self else { return }
                 if let SessionID = self.PracticeViewModel?.Session.id {
                     let UpdatedSessions = SessionModel.filter { Session in
@@ -122,6 +122,14 @@ class DestinationFolderViewModel: ObservableObject {
                 print("Error adding session: \(error)")
                 ErrorTTProgressHUD()
             }
+        }
+    }
+    
+    func ToggleSelection(Of Folder: SessionModel) {
+        if SelectedFolder?.id == Folder.id {
+            SelectedFolder = nil
+        } else {
+            SelectedFolder = Folder
         }
     }
     

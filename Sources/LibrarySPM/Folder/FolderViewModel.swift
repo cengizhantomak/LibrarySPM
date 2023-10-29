@@ -26,6 +26,7 @@ class FolderViewModel: ObservableObject {
     @Published var NewName = ""
     @Published var ClampedOpacity: CGFloat = 0.0
     @Published var isActive = false
+    @Published var IsScroll = false
     var FolderCreationDate: Date?
     var TodaySection: [SessionModel] = []
     var SessionSection: [SessionModel] = []
@@ -62,7 +63,7 @@ class FolderViewModel: ObservableObject {
     
     private func UpdateSessionModel(SessionModel: [SessionModel]) {
         DispatchQueue.main.async { [weak self] in
-            withAnimation {
+            withAnimation(.linear(duration: 0.2)) {
                 guard let self else { return }
                 self.Sessions = SessionModel
                 self.Session = nil
@@ -280,6 +281,14 @@ class FolderViewModel: ObservableObject {
         }
         if !IsSelecting {
             SelectedSessions.removeAll()
+        }
+    }
+    
+    func ToggleSelection(Of Folder: SessionModel) {
+        if let Index = SelectedSessions.firstIndex(where: { $0.id == Folder.id }) {
+            SelectedSessions.remove(at: Index)
+        } else {
+            SelectedSessions.append(Folder)
         }
     }
     

@@ -27,6 +27,10 @@ let package = Package(
         .package(
             url: "https://github.com/cengizhantomak/CustomAlertPackage",
             branch: "main"
+        ),
+        .package(
+            url: "https://github.com/onevcat/Kingfisher",
+            from: "7.9.1"
         )
     ],
     targets: [
@@ -37,7 +41,8 @@ let package = Package(
             dependencies: [
                 .product(name: "LVRealmKit", package: "LVRealmKit"),
                 .product(name: "TTProgressHUD", package: "TTProgressHUD"),
-                .product(name: "CustomAlertPackage", package: "CustomAlertPackage")
+                .product(name: "CustomAlertPackage", package: "CustomAlertPackage"),
+                .product(name: "Kingfisher", package: "Kingfisher")
             ],
             path: "Sources"
         ),

@@ -13,7 +13,6 @@ struct PracticeView: View {
     @StateObject var ViewModel: PracticeViewModel
     @Environment(\.horizontalSizeClass) var HorizontalSizeClass
     @Environment(\.presentationMode) var PresentationMode
-//    @State private var scrollPosition: CGFloat = .zero
     
     var body: some View {
         Content
@@ -37,11 +36,16 @@ struct PracticeView: View {
             .sheet(isPresented: $ViewModel.ShowMove) {
                 DestinationFolderView(ViewModel: DestinationFolderViewModel(PracticeViewModel: ViewModel))
             }
+            .overlay(alignment: .top) {
+                CustomNavBar
+            }
             .overlay {
+                SessionTitle
                 RenameAlert
                 DeleteAlert
                 ProgressHUD
             }
+            .animation(.linear(duration: 0.2), value: [ViewModel.IsSelecting, ViewModel.OnlyShowFavorites])
     }
 }
 
@@ -49,13 +53,12 @@ struct PracticeView: View {
 // MARK: - Extension
 extension PracticeView {
     private var Content: some View {
-        ZStack {
+        Group {
             if ViewModel.Session.practiceCount == 0 {
                 NoVideoView()
             } else {
                 GridView
             }
-            SessionTitle
         }
     }
     
@@ -74,39 +77,48 @@ extension PracticeView {
                             } else {
                                 PracticeItemView(ViewModel: ViewModel, Practice: Practice, ItemWidth: ItemWidth)
                                     .onTapGesture {
-                                        if let Index = ViewModel.SelectedPractices.firstIndex(where: { $0.id == Practice.id }) {
-                                            ViewModel.SelectedPractices.remove(at: Index)
-                                        } else {
-                                            ViewModel.SelectedPractices.append(Practice)
-                                        }
+                                        ViewModel.ToggleSelection(Of: Practice)
                                     }
                                     .opacity(ViewModel.Opacity(For: Practice))
                             }
                         }
                     }
                 }
-//                .background(GeometryReader { geometry in
-//                    Color.clear
-//                        .preference(key: ScrollOffsetPreferenceKey.self, value: geometry.frame(in: .named("Scroll")).origin)
-//                })
-//                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-//                    self.scrollPosition = value.y
-//                    //                    print("detail scrollPosition: ", value)
-//                }
-//                .overlay(alignment: .top, content: {
-//                    //                    if scrollPosition <= 0 {
-//                    //                        LinearGradient(
-//                    //                            gradient: Gradient(colors: [.black, .clear]),
-//                    //                            startPoint: .top,
-//                    //                            endPoint: .bottom)
-//                    //                        .edgesIgnoringSafeArea(.top)
-//                    //                        .frame(height: 10)
-//                    //                    }
-//                })
                 .padding(.horizontal, 5)
                 .padding(.top, 5)
                 .padding(.bottom, 75)
+                .overlay {
+                    GeometryReader { ScrollGeometry in
+                        Color.clear.preference(key: ScrollPreferenceKey.self, value: ScrollGeometry.frame(in: .named(StringConstants.Scroll)).minY)
+                    }
+                }
+                
+//                .background(GeometryReader { Proxy -> Color in
+//                    DispatchQueue.main.async {
+//                        ViewModel.UpdateClampedOpacity(With: Proxy, Name: StringConstants.Scroll)
+//                    }
+//                    return Color.clear
+//                })
+//            }
+//            .coordinateSpace(name: StringConstants.Scroll)
+//            LinearGradient(
+//                gradient: Gradient(colors: [.black, .clear]),
+//                startPoint: .top,
+//                endPoint: .bottom)
+//            .opacity(ViewModel.ClampedOpacity)
+//            .edgesIgnoringSafeArea(.top)
+//            .frame(height: 10)
             }
+            .coordinateSpace(name: StringConstants.Scroll)
+            .onPreferenceChange(ScrollPreferenceKey.self, perform: { Value in
+                withAnimation(.linear) {
+                    if Value < -16 {
+                        ViewModel.IsScroll = true
+                    } else {
+                        ViewModel.IsScroll = false
+                    }
+                }
+            })
         }
     }
     
@@ -124,6 +136,7 @@ extension PracticeView {
         VStack {
             HStack {
                 Text(ViewModel.Session.name)
+                    .foregroundStyle(ViewModel.IsScroll ? .white : .primary)
                     .fontWeight(.bold)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -137,6 +150,17 @@ extension PracticeView {
         }
     }
     
+    // MARK: - Custom Navigation Bar
+    private var CustomNavBar: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [.black, .clear]),
+            startPoint: .top,
+            endPoint: .bottom)
+        .opacity(ViewModel.IsScroll ? 0.75 : 0)
+        .edgesIgnoringSafeArea(.top)
+        .frame(height: 100)
+    }
+    
     // MARK: - Toolbars
     private var CustomBackButton: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
@@ -148,6 +172,7 @@ extension PracticeView {
                         .fontWeight(.semibold)
                     Text(StringConstants.Videos)
                 }
+                .foregroundStyle(ViewModel.IsScroll ? .white : .primary)
             }
         }
     }

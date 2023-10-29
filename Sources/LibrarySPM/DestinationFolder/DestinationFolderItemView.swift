@@ -7,6 +7,7 @@
 
 import SwiftUI
 import LVRealmKit
+import Kingfisher
 
 struct DestinationFolderItemView: View {
     @StateObject var ViewModel: DestinationFolderViewModel
@@ -46,17 +47,29 @@ extension DestinationFolderItemView {
         let SafeItemWidth = max(ItemWidth, 1)
         
         return Group {
-            if let ThumbPath = Folder.thumbnail {
-                AsyncImage(url: URL.documentsDirectory.appending(path: ThumbPath)) { Image in
-                    Image
+            
+//            if let ThumbPath = Folder.thumbnail {
+//                AsyncImage(url: URL.documentsDirectory.appending(path: ThumbPath)) { Image in
+//                    Image
+//                        .resizable()
+//                        .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
+//                        .scaledToFit()
+//                        .cornerRadius(10)
+//                } placeholder: {
+//                    ProgressView()
+//                        .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
+//                }
+                
+                // MARK: - KINGFISHER
+                if let ThumbPath = Folder.thumbnail {
+                    KFImage(URL.documentsDirectory.appending(path: ThumbPath))
+                        .cacheMemoryOnly()
+                        .setProcessor(DownsamplingImageProcessor(size: .init(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))))
+                        .scaleFactor(UIApplication.shared.firstWindow?.screen.scale ?? 2)
                         .resizable()
                         .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
                         .scaledToFit()
                         .cornerRadius(10)
-                } placeholder: {
-                    ProgressView()
-                        .frame(width: SafeItemWidth, height: SafeItemWidth * (1970 / 1080))
-                }
             } else {
                 Rectangle()
                     .fill(ColorScheme == .dark ? Color(red: 0.1, green: 0.1, blue: 0.1) : Color(red: 0.9, green: 0.9, blue: 0.9))
